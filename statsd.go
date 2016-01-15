@@ -24,11 +24,10 @@ func (t *timer) Reset() {
 	t.start = time.Now()
 }
 
-func (t *timer) Send(names ...interface{}) {
-	value := ":" + strconv.FormatUint(
-		uint64((time.Now().UnixNano()-t.start.UnixNano())/1e6),
-		10,
-	) + "|ms"
+func (t *timer) Send(names ...interface{}) (took time.Duration) {
+	took = time.Since(t.start)
+
+	value := ":" + strconv.FormatUint(uint64(took.Nanoseconds()/1e6), 10) + "|ms"
 
 	// If we don't have a conn, make one.
 	if conn == nil {
