@@ -1,4 +1,4 @@
-# statsd <a href=https://godoc.org/github.com/cv-library/statsd><img align=right src=https://godoc.org/github.com/cv-library/statsd?status.svg></a>
+# statsd <a href=https://godoc.org/github.com/cv-library/statsd><img align=right src=https://godoc.org/github.com/cv-library/statsd?status.svg></a><a href=https://travis-ci.org/cv-library/statsd><img align=right src=https://api.travis-ci.org/cv-library/statsd.svg></a>
 
 A [StatsD](https://github.com/etsy/statsd) client for Go.
 
