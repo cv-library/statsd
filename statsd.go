@@ -2,14 +2,26 @@ package statsd
 
 import (
 	"net"
+	"os"
 	"strconv"
 	"time"
 )
 
 var Address = "localhost:8125"
 
+var AlsoAppendHost = true
+
 // Cache the conn for perf.
 var conn net.Conn
+var host string
+
+func init() {
+	var err error
+
+	if host, err = os.Hostname(); err != nil {
+		panic(err)
+	}
+}
 
 func Timer() timer {
 	return timer{time.Now()}
@@ -35,6 +47,11 @@ func (t *timer) Send(names ...interface{}) (took time.Duration) {
 
 	for _, name := range names {
 		conn.Write([]byte(name.(string) + value))
+
+		// Send a host suffixed stat too.
+		if (AlsoAppendHost) {
+			conn.Write([]byte(name.(string) + "." + host + value))
+		}
 	}
 
 	return
