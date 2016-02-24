@@ -27,11 +27,11 @@ func (t *timer) Reset() {
 func (t *timer) Send(names ...interface{}) (took time.Duration) {
 	took = time.Since(t.start)
 
-	value := ":" + strconv.FormatUint(uint64(took.Nanoseconds()/1e6), 10) + "|ms"
-
 	if err := getConnection(); err != nil {
 		return
 	}
+
+	value := ":" + strconv.FormatUint(uint64(took.Nanoseconds()/1e6), 10) + "|ms"
 
 	for _, name := range names {
 		conn.Write([]byte(name.(string) + value))
