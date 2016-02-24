@@ -10,7 +10,7 @@ func TestTimerSend(t *testing.T) {
 
 	time.Sleep(time.Millisecond)
 
-	if timer.Send().Nanoseconds() == 0 {
+	if timer.Send("foo").Nanoseconds() == 0 {
 		t.Fail()
 	}
 }
