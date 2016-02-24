@@ -49,7 +49,7 @@ func (t *timer) Send(names ...interface{}) (took time.Duration) {
 		conn.Write([]byte(name.(string) + value))
 
 		// Send a host suffixed stat too.
-		if (AlsoAppendHost) {
+		if AlsoAppendHost {
 			conn.Write([]byte(name.(string) + "." + host + value))
 		}
 	}
