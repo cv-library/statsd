@@ -46,9 +46,9 @@ func Inc(name string) {
 		return
 	}
 
-    conn.Write([]byte(name + ":1|c"))
+	conn.Write([]byte(name + ":1|c"))
 
-    return
+	return
 }
 
 func getConnection() (err error) {
