@@ -68,6 +68,23 @@ func Inc(name string) {
 	return
 }
 
+func Time(name string, took time.Duration) {
+	if err := getConnection(); err != nil {
+		return
+	}
+
+	value := ":" + strconv.FormatUint(uint64(took.Nanoseconds()/1e6), 10) + "|ms"
+
+	conn.Write([]byte(name + value))
+
+	// Send a host suffixed stat too.
+	if AlsoAppendHost {
+		conn.Write([]byte(name + "." + host + value))
+	}
+
+	return
+}
+
 func getConnection() (err error) {
 	// If we don't have a conn, make one.
 	if conn == nil {
