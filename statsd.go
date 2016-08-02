@@ -65,6 +65,11 @@ func Inc(name string) {
 
 	conn.Write([]byte(name + ":1|c"))
 
+	// Send a host suffixed stat too.
+	if AlsoAppendHost {
+		conn.Write([]byte(name + "." + host + ":1|c"))
+	}
+
 	return
 }
 
