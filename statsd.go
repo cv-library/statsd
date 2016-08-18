@@ -57,6 +57,23 @@ func (t *timer) Send(names ...interface{}) (took time.Duration) {
 	return
 }
 
+func Gauge(name string, value int64) {
+	if err := getConnection(); err != nil {
+		return
+	}
+
+	suffix := ":" + strconv.FormatInt(value, 10) + "|g"
+
+	conn.Write([]byte(name + suffix))
+
+	// Send a host suffixed stat too.
+	if AlsoAppendHost {
+		conn.Write([]byte(name + "." + host + suffix))
+	}
+
+	return
+}
+
 // Inc is a simple counter adding one to a given metric.
 func Inc(name string) {
 	if err := getConnection(); err != nil {
