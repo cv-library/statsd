@@ -7,8 +7,10 @@ import (
 	"time"
 )
 
+// Address of the StatsD server.
 var Address = "localhost:8125"
 
+// AlsoAppendHost appends hostname along with any metric sent.
 var AlsoAppendHost = true
 
 // Cache the conn for perf.
@@ -57,6 +59,7 @@ func (t *timer) Send(names ...interface{}) (took time.Duration) {
 	return
 }
 
+// Gauge sets arbitrary numeric value for a given metric.
 func Gauge(name string, value int64) {
 	if err := getConnection(); err != nil {
 		return
@@ -90,6 +93,7 @@ func Inc(name string) {
 	return
 }
 
+// Time sends duration in ms for a given metric.
 func Time(name string, took time.Duration) {
 	if err := getConnection(); err != nil {
 		return
