@@ -93,6 +93,26 @@ func Inc(name string) {
 	return
 }
 
+// IncSampled increments a counter with the given sample rate (between 0.0 - 1.0).
+// Example: Passing 0.1 tells statsd that this metric has been sample 1/10 times.
+// IE Reported metric will be 10x the number of times called.
+func IncSampled(name string, rate float64){
+	if err := getConnection(); err != nil {
+		return
+	}
+
+	rateString := "|@" + strconv.FormatFloat(rate, 'f', -1, 64)
+
+	conn.Write([]byte(name + ":1|c" + rateString))
+
+	// Send a host suffixed stat too.
+	if AlsoAppendHost {
+		conn.Write([]byte(name + "." + host + ":1|c" + rateString))
+	}
+
+	return
+}
+
 // Time sends duration in ms for a given metric.
 func Time(name string, took time.Duration) {
 	if err := getConnection(); err != nil {
