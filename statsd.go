@@ -25,20 +25,21 @@ func init() {
 	}
 }
 
-func Timer() timer {
-	return timer{time.Now()}
+// NewTime returns a new timer
+func NewTimer() Timer {
+	return Timer{time.Now()}
 }
 
 // Timer
-type timer struct {
+type Timer struct {
 	start time.Time
 }
 
-func (t *timer) Reset() {
+func (t *Timer) Reset() {
 	t.start = time.Now()
 }
 
-func (t *timer) Send(names ...interface{}) (took time.Duration) {
+func (t *Timer) Send(names ...interface{}) (took time.Duration) {
 	took = time.Since(t.start)
 
 	if err := getConnection(); err != nil {

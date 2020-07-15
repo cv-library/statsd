@@ -17,7 +17,7 @@ func TestTimerSend(t *testing.T) {
 
 	conn.SetDeadline(time.Now().Add(time.Second))
 
-	timer := Timer()
+	timer := NewTimer()
 
 	time.Sleep(time.Millisecond)
 
