@@ -1,3 +1,3 @@
-module github.com/cv-library/statsd
+module github.com/chrysmore/statsd
 
 go 1.13
