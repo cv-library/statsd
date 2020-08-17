@@ -79,18 +79,7 @@ func Gauge(name string, value int64) {
 
 // Inc is a simple counter adding one to a given metric.
 func Inc(name string) {
-	if err := getConnection(); err != nil {
-		return
-	}
-
-	conn.Write([]byte(name + ":1|c"))
-
-	// Send a host suffixed stat too.
-	if AlsoAppendHost {
-		conn.Write([]byte(name + "." + host + ":1|c"))
-	}
-
-	return
+	return IncSampled(name, 1.0)
 }
 
 // IncSampled increments a counter with the given sample rate (between 0.0 - 1.0).
@@ -101,13 +90,16 @@ func IncSampled(name string, rate float64){
 		return
 	}
 
-	rateString := "|@" + strconv.FormatFloat(rate, 'f', -1, 64)
+	message := ":1|c";
+	if rate < 1.0 {
+		message = message + "|@" + strconv.FormatFloat(rate, 'f', -1, 64)
+	}
 
-	conn.Write([]byte(name + ":1|c" + rateString))
+	conn.Write([]byte(name + message))
 
 	// Send a host suffixed stat too.
 	if AlsoAppendHost {
-		conn.Write([]byte(name + "." + host + ":1|c" + rateString))
+		conn.Write([]byte(name + "." + host + message))
 	}
 
 	return
