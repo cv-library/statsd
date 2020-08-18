@@ -79,13 +79,13 @@ func Gauge(name string, value int64) {
 
 // Inc is a simple counter adding one to a given metric.
 func Inc(name string) {
-	return IncSampled(name, 1.0)
+	return IncSampled(1.0, name)
 }
 
 // IncSampled increments a counter with the given sample rate (between 0.0 - 1.0).
 // Example: Passing 0.1 tells statsd that this metric has been sample 1/10 times.
 // IE Reported metric will be 10x the number of times called.
-func IncSampled(name string, rate float64) {
+func IncSampled(rate float64, name string) {
 	if err := getConnection(); err != nil {
 		return
 	}
