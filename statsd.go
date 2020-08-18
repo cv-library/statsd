@@ -21,7 +21,7 @@ var DefaultOptions = &Options{
 	AlwaysSend: false,
 }
 
-// Cache the conn for perf.
+// Cache the connection for performance
 var conn net.Conn
 var host string
 
@@ -70,7 +70,7 @@ func (t *timer) Reset() {
 }
 
 // Send takes a list of remote timer names, and submits the time that
-// has ellapsed since the creation of the timer to each in turn.
+// has elapsed since the creation of the timer to each in turn.
 // It returns a time.Duration representing the amount of time that was sent.
 func (t *timer) Send(names ...interface{}) (took time.Duration) {
 	return t.SendWithOptions(nil, names...)

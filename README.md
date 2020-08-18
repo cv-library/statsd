@@ -16,8 +16,13 @@ func main() {
 
     // Do stuff
 
-    // Note: Lack of support for sampling yet.
-    timer.send("metric.name", "metric.name2")
+    timer.Send("metric.name", "metric.name2")
+
+    // Or using a sampling rate
+    timer.SendWithOptions(
+        &statsd.Options{ Rate: 0.5 },
+        "sampled.metric",
+    )
 }
 ```
 
