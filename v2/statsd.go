@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"math/rand"
 )
 
 // Address of the StatsD server.
@@ -50,22 +51,17 @@ func (t *timer) Send(names ...interface{}) (took time.Duration) {
 func (t *timer) SendSampled(rate float64, names ...interface{}) (took time.Duration) {
 	took = time.Since(t.start)
 
-	if err := getConnection(); err != nil {
+	var message string
+	if sampled, suffix := sampleData(rate); sampled {
+		message = ":" +
+			strconv.FormatUint(uint64(took.Nanoseconds()/1e6), 10) +
+			"|ms" + suffix
+	} else {
 		return
 	}
 
-	value := ":" + strconv.FormatUint(uint64(took.Nanoseconds()/1e6), 10) + "|ms"
-	if rate < 1.0 {
-		value = value + "|@" + strconv.FormatFloat(rate, 'f', -1, 64)
-	}
-
 	for _, name := range names {
-		conn.Write([]byte(name.(string) + value))
-
-		// Send a host suffixed stat too.
-		if AlsoAppendHost {
-			conn.Write([]byte(name.(string) + "." + host + value))
-		}
+		send(name.(string), message)
 	}
 
 	return
@@ -80,23 +76,14 @@ func Gauge(name string, value int64) {
 // GaugeSampled sets arbitrary numeric value for a given metric
 // with the given sample rate.
 func GaugeSampled(rate float64, name string, value int64) {
-	if err := getConnection(); err != nil {
+	var message string
+	if sampled, suffix := sampleData(rate); sampled {
+		message = ":" + strconv.FormatInt(value, 10) + "|g" + suffix
+	} else {
 		return
 	}
 
-	suffix := ":" + strconv.FormatInt(value, 10) + "|g"
-	if rate < 1.0 {
-		suffix = suffix + "|@" + strconv.FormatFloat(rate, 'f', -1, 64)
-	}
-
-	conn.Write([]byte(name + suffix))
-
-	// Send a host suffixed stat too.
-	if AlsoAppendHost {
-		conn.Write([]byte(name + "." + host + suffix))
-	}
-
-	return
+	send(name, message)
 }
 
 // Inc increments a counter.
@@ -106,13 +93,39 @@ func Inc(name string) {
 
 // IncSampled increments a counter with the given sample rate.
 func IncSampled(rate float64, name string){
-	if err := getConnection(); err != nil {
+	var message string
+	if sampled, suffix := sampleData(rate); sampled {
+		message = ":1|c" + suffix
+	} else {
 		return
 	}
 
-	message := ":1|c";
-	if rate < 1.0 {
-		message = message + "|@" + strconv.FormatFloat(rate, 'f', -1, 64)
+	send(name, message)
+}
+
+// Time sends duration in ms for a given metric.
+func Time(name string, took time.Duration) {
+	TimeSampled(1.0, name, took)
+}
+
+// TimeSampled sends duration in ms for a given metric
+// with the given sample rate.
+func TimeSampled(rate float64, name string, took time.Duration) {
+	var message string
+	if sampled, suffix := sampleData(rate); sampled {
+		message = ":" +
+			strconv.FormatUint(uint64(took.Nanoseconds()/1e6), 10) +
+			"|ms" + suffix
+	} else {
+		return
+	}
+
+	send(name, message)
+}
+
+func send(name string, message string) {
+	if err := getConnection(); err != nil {
+		return
 	}
 
 	conn.Write([]byte(name + message))
@@ -125,31 +138,16 @@ func IncSampled(rate float64, name string){
 	return
 }
 
-// Time sends duration in ms for a given metric.
-func Time(name string, took time.Duration) {
-	TimeSampled(1.0, name, took)
-}
-
-// TimeSampled sends duration in ms for a given metric
-// with the given sample rate.
-func TimeSampled(rate float64, name string, took time.Duration) {
-	if err := getConnection(); err != nil {
-		return
+func sampleData(rate float64) (bool, string) {
+	if rate == 1.0 {
+		return true, ""
 	}
 
-	value := ":" + strconv.FormatUint(uint64(took.Nanoseconds()/1e6), 10) + "|ms"
-	if rate < 1.0 {
-		value = value + "|@" + strconv.FormatFloat(rate, 'f', -1, 64)
+	if rand.Float64() < rate {
+		return false, ""
 	}
 
-	conn.Write([]byte(name + value))
-
-	// Send a host suffixed stat too.
-	if AlsoAppendHost {
-		conn.Write([]byte(name + "." + host + value))
-	}
-
-	return
+	return true, "|@" + strconv.FormatFloat(rate, 'f', -1, 64)
 }
 
 func getConnection() (err error) {

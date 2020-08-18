@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"testing"
 	"time"
+	"math/rand"
 )
 
 func TestTime(t *testing.T) {
@@ -187,5 +188,6 @@ func test (t *testing.T, check func(*net.UDPConn) ) {
 
 	conn.SetDeadline(time.Now().Add(time.Second))
 
+	rand.Seed(1)
 	check(conn)
 }
