@@ -2,6 +2,7 @@ package statsd
 
 import (
 	"bytes"
+	"math/rand"
 	"net"
 	"strconv"
 	"testing"
@@ -187,5 +188,6 @@ func test(t *testing.T, check func(*net.UDPConn)) {
 
 	conn.SetDeadline(time.Now().Add(time.Second))
 
+	rand.Seed(2) // First call to rand.Float64() == 0.167297
 	check(conn)
 }
