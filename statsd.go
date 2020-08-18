@@ -35,10 +35,6 @@ func init() {
 	}
 }
 
-func Timer() timer {
-	return timer{time.Now()}
-}
-
 // Options holds key/value pairs to be used when calling the functions
 // with the "...WithOptions" suffix.
 type Options struct {
@@ -63,6 +59,12 @@ type timer struct {
 	start time.Time
 }
 
+// Timer returns a new timer set to `time.Now()`
+func Timer() timer {
+	return timer{time.Now()}
+}
+
+// Reset sets the start time for the timer to `time.Now()`
 func (t *timer) Reset() {
 	t.start = time.Now()
 }
