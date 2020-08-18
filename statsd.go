@@ -38,7 +38,16 @@ func (t *timer) Reset() {
 	t.start = time.Now()
 }
 
+// Send takes a list of remote timer names, and submits the time that
+// has ellapsed since the creation of the timer to each in turn.
+// It returns a time.Duration representing the amount of time that was sent.
 func (t *timer) Send(names ...interface{}) (took time.Duration) {
+	return t.SendSampled(1.0, names...)
+}
+
+// SendSampled works like Send but sends the timing information
+// with the given sample rate.
+func (t *timer) SendSampled(rate float64, names ...interface{}) (took time.Duration) {
 	took = time.Since(t.start)
 
 	if err := getConnection(); err != nil {
@@ -46,6 +55,9 @@ func (t *timer) Send(names ...interface{}) (took time.Duration) {
 	}
 
 	value := ":" + strconv.FormatUint(uint64(took.Nanoseconds()/1e6), 10) + "|ms"
+	if rate < 1.0 {
+		value = value + "|@" + strconv.FormatFloat(rate, 'f', -1, 64)
+	}
 
 	for _, name := range names {
 		conn.Write([]byte(name.(string) + value))
@@ -61,11 +73,21 @@ func (t *timer) Send(names ...interface{}) (took time.Duration) {
 
 // Gauge sets arbitrary numeric value for a given metric.
 func Gauge(name string, value int64) {
+	GaugeSampled(1.0, name, value)
+	return
+}
+
+// GaugeSampled sets arbitrary numeric value for a given metric
+// with the given sample rate.
+func GaugeSampled(rate float64, name string, value int64) {
 	if err := getConnection(); err != nil {
 		return
 	}
 
 	suffix := ":" + strconv.FormatInt(value, 10) + "|g"
+	if rate < 1.0 {
+		suffix = suffix + "|@" + strconv.FormatFloat(rate, 'f', -1, 64)
+	}
 
 	conn.Write([]byte(name + suffix))
 
@@ -77,14 +99,12 @@ func Gauge(name string, value int64) {
 	return
 }
 
-// Inc is a simple counter adding one to a given metric.
+// Inc increments a counter.
 func Inc(name string) {
-	return IncSampled(1.0, name)
+	IncSampled(1.0, name)
 }
 
-// IncSampled increments a counter with the given sample rate (between 0.0 - 1.0).
-// Example: Passing 0.1 tells statsd that this metric has been sample 1/10 times.
-// IE Reported metric will be 10x the number of times called.
+// IncSampled increments a counter with the given sample rate.
 func IncSampled(rate float64, name string) {
 	if err := getConnection(); err != nil {
 		return
@@ -107,11 +127,20 @@ func IncSampled(rate float64, name string) {
 
 // Time sends duration in ms for a given metric.
 func Time(name string, took time.Duration) {
+	TimeSampled(1.0, name, took)
+}
+
+// TimeSampled sends duration in ms for a given metric
+// with the given sample rate.
+func TimeSampled(rate float64, name string, took time.Duration) {
 	if err := getConnection(); err != nil {
 		return
 	}
 
 	value := ":" + strconv.FormatUint(uint64(took.Nanoseconds()/1e6), 10) + "|ms"
+	if rate < 1.0 {
+		value = value + "|@" + strconv.FormatFloat(rate, 'f', -1, 64)
+	}
 
 	conn.Write([]byte(name + value))
 
