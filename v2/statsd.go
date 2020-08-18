@@ -73,7 +73,8 @@ func (t *timer) SendSampled(rate float64, names ...interface{}) (took time.Durat
 
 // Gauge sets arbitrary numeric value for a given metric.
 func Gauge(name string, value int64) {
-	return GaugeSampled(1.0, name, value)
+	GaugeSampled(1.0, name, value)
+	return
 }
 
 // GaugeSampled sets arbitrary numeric value for a given metric
@@ -100,7 +101,7 @@ func GaugeSampled(rate float64, name string, value int64) {
 
 // Inc increments a counter.
 func Inc(name string) {
-	return IncSampled(1.0, name)
+	IncSampled(1.0, name)
 }
 
 // IncSampled increments a counter with the given sample rate.
@@ -126,7 +127,7 @@ func IncSampled(rate float64, name string){
 
 // Time sends duration in ms for a given metric.
 func Time(name string, took time.Duration) {
-	return TimeSampled(1.0, name, took)
+	TimeSampled(1.0, name, took)
 }
 
 // TimeSampled sends duration in ms for a given metric
