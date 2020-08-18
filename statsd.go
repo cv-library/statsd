@@ -122,6 +122,17 @@ func Inc(name string) {
 	IncWithOptions(nil, name)
 }
 
+// IncSampled increments a counter with the given sample rate.
+// Note that this function will send the data to the server every time
+// it is called. It is the caller's responsibility to implement the
+// sampling.
+//
+// Deprecated: Use IncWithOptions and pass the sampling rate
+// using the Options struct.
+func IncSampled(name string, rate float64) {
+	IncWithOptions(&Options{Rate: rate, AlwaysSend: true}, name)
+}
+
 // IncWithOptions increments a counter using the provided options.
 func IncWithOptions(options *Options, name string) {
 	var message string

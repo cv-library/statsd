@@ -131,6 +131,23 @@ func TestInc(t *testing.T) {
 	})
 }
 
+// This function is deprecated, but we test it while we have it
+func TestIncSampled(t *testing.T) {
+	test(t, func(conn *net.UDPConn) {
+		IncSampled("foo", 0.5)
+
+		exp := []byte("foo:1|c|@0.5")
+		got := make([]byte, len(exp))
+		if _, _, err := conn.ReadFromUDP(got); err != nil {
+			t.Fatal(err)
+		}
+
+		if !bytes.Equal(got, exp) {
+			t.Errorf("got: %s; want: %s", got, exp)
+		}
+	})
+}
+
 func TestIncWithOptions(t *testing.T) {
 	test(t, func(conn *net.UDPConn) {
 		IncWithOptions(&Options{Rate: 0.1, AlwaysSend: true}, "foo")
