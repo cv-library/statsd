@@ -14,6 +14,13 @@ var Address = "localhost:8125"
 // AlsoAppendHost appends hostname along with any metric sent.
 var AlsoAppendHost = true
 
+// DefaultOptions holds the default options, used by the "...WithOptions"
+// functions when `nil` is passed
+var DefaultOptions = &Options{
+	Rate:       1.0,
+	AlwaysSend: false,
+}
+
 // Cache the conn for perf.
 var conn net.Conn
 var host string
@@ -32,6 +39,25 @@ func Timer() timer {
 	return timer{time.Now()}
 }
 
+// Options holds key/value pairs to be used when calling the functions
+// with the "...WithOptions" suffix.
+type Options struct {
+	// Rate specifies the sampling rate to use, between 0 and 1. A value of
+	// 0.1 means that this value was sampled 1 out of every 10 times. Under
+	// normal circumstances, the remaining 9 out of 10 times will send no data
+	// to the server, to reduce network use. The `AlwaysSend` option below can
+	// be used to change this behaviour.
+	Rate float64
+	// AlwaysSend specifies whether the packet should be sent to the
+	// server regardless of the sampling rate used. Under normal circumstances,
+	// every call that would result in sending data to the server checks the
+	// sampling rate and uses that to decide whether to send the data or not
+	// (if the rate is 0.1, only 1 out of 10 packets would be sent). When this
+	// option is set to "true", the packet will be sent regardless. This is useful
+	// if the sampling is being done on the calling side.
+	AlwaysSend bool
+}
+
 // Timer
 type timer struct {
 	start time.Time
@@ -45,16 +71,19 @@ func (t *timer) Reset() {
 // has ellapsed since the creation of the timer to each in turn.
 // It returns a time.Duration representing the amount of time that was sent.
 func (t *timer) Send(names ...interface{}) (took time.Duration) {
-	return t.SendSampled(1.0, names...)
+	return t.SendWithOptions(nil, names...)
 }
 
-// SendSampled works like Send but sends the timing information
-// with the given sample rate.
-func (t *timer) SendSampled(rate float64, names ...interface{}) (took time.Duration) {
+// SendWithOptions works like Send but sends the timing information
+// using the provided options.
+func (t *timer) SendWithOptions(
+	options *Options,
+	names ...interface{},
+) (took time.Duration) {
 	took = time.Since(t.start)
 
 	var message string
-	if sampled, suffix := sampleData(rate); sampled {
+	if sampled, suffix := check(options); sampled {
 		message = ":" +
 			strconv.FormatUint(uint64(took.Nanoseconds()/1e6), 10) +
 			"|ms" + suffix
@@ -71,15 +100,15 @@ func (t *timer) SendSampled(rate float64, names ...interface{}) (took time.Durat
 
 // Gauge sets arbitrary numeric value for a given metric.
 func Gauge(name string, value int64) {
-	GaugeSampled(1.0, name, value)
+	GaugeWithOptions(nil, name, value)
 	return
 }
 
-// GaugeSampled sets arbitrary numeric value for a given metric
-// with the given sample rate.
-func GaugeSampled(rate float64, name string, value int64) {
+// GaugeWithOptions sets arbitrary numeric value for a given metric
+// using the provided options.
+func GaugeWithOptions(options *Options, name string, value int64) {
 	var message string
-	if sampled, suffix := sampleData(rate); sampled {
+	if sampled, suffix := check(options); sampled {
 		message = ":" + strconv.FormatInt(value, 10) + "|g" + suffix
 	} else {
 		return
@@ -90,13 +119,13 @@ func GaugeSampled(rate float64, name string, value int64) {
 
 // Inc increments a counter.
 func Inc(name string) {
-	IncSampled(1.0, name)
+	IncWithOptions(nil, name)
 }
 
-// IncSampled increments a counter with the given sample rate.
-func IncSampled(rate float64, name string) {
+// IncWithOptions increments a counter using the provided options.
+func IncWithOptions(options *Options, name string) {
 	var message string
-	if sampled, suffix := sampleData(rate); sampled {
+	if sampled, suffix := check(options); sampled {
 		message = ":1|c" + suffix
 	} else {
 		return
@@ -107,14 +136,14 @@ func IncSampled(rate float64, name string) {
 
 // Time sends duration in ms for a given metric.
 func Time(name string, took time.Duration) {
-	TimeSampled(1.0, name, took)
+	TimeWithOptions(nil, name, took)
 }
 
-// TimeSampled sends duration in ms for a given metric
-// with the given sample rate.
-func TimeSampled(rate float64, name string, took time.Duration) {
+// TimeWithOptions sends duration in ms for a given metric
+// using the provided options.
+func TimeWithOptions(options *Options, name string, took time.Duration) {
 	var message string
-	if sampled, suffix := sampleData(rate); sampled {
+	if sampled, suffix := check(options); sampled {
 		message = ":" +
 			strconv.FormatUint(uint64(took.Nanoseconds()/1e6), 10) +
 			"|ms" + suffix
@@ -140,16 +169,16 @@ func send(name string, message string) {
 	return
 }
 
-func sampleData(rate float64) (bool, string) {
-	if rate == 1.0 {
-		return true, ""
+func check(options *Options) (bool, string) {
+	if options == nil {
+		options = DefaultOptions
 	}
 
-	if rand.Float64() >= rate {
+	if !options.AlwaysSend && rand.Float64() >= options.Rate {
 		return false, ""
 	}
 
-	return true, "|@" + strconv.FormatFloat(rate, 'f', -1, 64)
+	return true, "|@" + strconv.FormatFloat(options.Rate, 'f', -1, 64)
 }
 
 func getConnection() (err error) {

@@ -32,14 +32,14 @@ func TestTime(t *testing.T) {
 	})
 }
 
-func TestTimeSampled(t *testing.T) {
+func TestTimeWithOptions(t *testing.T) {
 	test(t, func(conn *net.UDPConn) {
 		dur, err := time.ParseDuration("1h30m45s")
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		TimeSampled(0.5, "foo", dur)
+		TimeWithOptions(&Options{Rate: 0.5}, "foo", dur)
 
 		exp := []byte("foo:" +
 			strconv.FormatUint(uint64(dur.Nanoseconds()/1e6), 10) + "|ms|@0.5")
@@ -91,12 +91,12 @@ func TestTimerSend(t *testing.T) {
 	})
 }
 
-func TestTimerSendSampled(t *testing.T) {
+func TestTimerSendWithOptions(t *testing.T) {
 	test(t, func(conn *net.UDPConn) {
 		timer := Timer()
 		time.Sleep(time.Millisecond)
 
-		took := timer.SendSampled(0.5, "foo")
+		took := timer.SendWithOptions(&Options{Rate: 0.5}, "foo")
 		if took == 0 {
 			t.Error("Send() took no time")
 		}
@@ -131,11 +131,11 @@ func TestInc(t *testing.T) {
 	})
 }
 
-func TestIncSampled(t *testing.T) {
+func TestIncWithOptions(t *testing.T) {
 	test(t, func(conn *net.UDPConn) {
-		IncSampled(0.5, "foo")
+		IncWithOptions(&Options{Rate: 0.1, AlwaysSend: true}, "foo")
 
-		exp := []byte("foo:1|c|@0.5")
+		exp := []byte("foo:1|c|@0.1")
 		got := make([]byte, len(exp))
 		if _, _, err := conn.ReadFromUDP(got); err != nil {
 			t.Fatal(err)
@@ -163,9 +163,9 @@ func TestGauge(t *testing.T) {
 	})
 }
 
-func TestGaugeSampled(t *testing.T) {
+func TestGaugeWithOptions(t *testing.T) {
 	test(t, func(conn *net.UDPConn) {
-		GaugeSampled(0.5, "foo", 42)
+		GaugeWithOptions(&Options{Rate: 0.5}, "foo", 42)
 
 		exp := []byte("foo:42|g|@0.5")
 		got := make([]byte, len(exp))
