@@ -54,31 +54,32 @@ type Options struct {
 	AlwaysSend bool
 }
 
-// Timer
-type timer struct {
+// Timing keeps track of a point in time, and makes it simpler to send
+// timing stats to the server based on that starting point.
+type Timing struct {
 	start time.Time
 }
 
-// Timer returns a new timer set to `time.Now()`
-func Timer() timer {
-	return timer{time.Now()}
+// Timer returns a new Timing set to `time.Now()`
+func Timer() Timing {
+	return Timing{time.Now()}
 }
 
 // Reset sets the start time for the timer to `time.Now()`
-func (t *timer) Reset() {
+func (t *Timing) Reset() {
 	t.start = time.Now()
 }
 
 // Send takes a list of remote timer names, and submits the time that
 // has elapsed since the creation of the timer to each in turn.
 // It returns a time.Duration representing the amount of time that was sent.
-func (t *timer) Send(names ...interface{}) (took time.Duration) {
+func (t *Timing) Send(names ...interface{}) (took time.Duration) {
 	return t.SendWithOptions(nil, names...)
 }
 
 // SendWithOptions works like Send but sends the timing information
 // using the provided options.
-func (t *timer) SendWithOptions(
+func (t *Timing) SendWithOptions(
 	options *Options,
 	names ...interface{},
 ) (took time.Duration) {
